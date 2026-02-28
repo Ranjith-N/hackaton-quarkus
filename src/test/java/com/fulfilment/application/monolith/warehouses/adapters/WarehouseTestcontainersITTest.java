@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Quarkus provides built-in support for spinning up test databases.
  */
 @QuarkusTest
-public class WarehouseTestcontainersIT {
+public class WarehouseTestcontainersITTest {
 
   @Inject
   WarehouseRepository warehouseRepository;
@@ -44,7 +44,7 @@ public class WarehouseTestcontainersIT {
   public void setup() {
     // Clean database
     em.createQuery("DELETE FROM DbWarehouse").executeUpdate();
-    
+
     createWarehouseUseCase = new CreateWarehouseUseCase(warehouseRepository, locationResolver);
   }
 
@@ -61,17 +61,17 @@ public class WarehouseTestcontainersIT {
     warehouse1.capacity = 50;
     warehouse1.stock = 10;
     warehouse1.createdAt = java.time.LocalDateTime.now();
-    
+
     createWarehouseUseCase.create(warehouse1);
-    
+
     // Try to create second with same code directly via DB
     DbWarehouse dbWarehouse = new DbWarehouse();
-    dbWarehouse.businessUnitCode = "DB-UNIQUE-001";  // Duplicate!
+    dbWarehouse.businessUnitCode = "DB-UNIQUE-001"; // Duplicate!
     dbWarehouse.location = "ZWOLLE-001";
     dbWarehouse.capacity = 30;
     dbWarehouse.stock = 5;
     dbWarehouse.createdAt = java.time.LocalDateTime.now();
-    
+
     // Database should reject this
     assertThrows(Exception.class, () -> {
       em.persist(dbWarehouse);
@@ -92,21 +92,21 @@ public class WarehouseTestcontainersIT {
       warehouse.location = "AMSTERDAM-001";
       warehouse.capacity = 20 + (i * 10);
       warehouse.stock = 5 + i;
-      
+
       createWarehouseUseCase.create(warehouse);
     }
-    
+
     // Query all warehouses
     List<Warehouse> all = warehouseRepository.getAll();
-    
+
     // Should have at least 5
     assertTrue(all.size() >= 5);
-    
+
     // Verify they're from Amsterdam
     long amsterdamCount = all.stream()
         .filter(w -> "AMSTERDAM-001".equals(w.location))
         .count();
-    
+
     assertEquals(5, amsterdamCount);
   }
 
@@ -122,11 +122,11 @@ public class WarehouseTestcontainersIT {
     dbWarehouse.capacity = 50;
     dbWarehouse.stock = 10;
     dbWarehouse.createdAt = java.time.LocalDateTime.now();
-    dbWarehouse.archivedAt = null;  // NULL archived date
-    
+    dbWarehouse.archivedAt = null; // NULL archived date
+
     em.persist(dbWarehouse);
     em.flush();
-    
+
     // Retrieve and verify
     DbWarehouse found = em.find(DbWarehouse.class, dbWarehouse.id);
     assertNotNull(found);
@@ -143,7 +143,7 @@ public class WarehouseTestcontainersIT {
     } catch (Exception e) {
       // Expected
     }
-    
+
     // Verify nothing was persisted
     Warehouse found = warehouseRepository.findByBusinessUnitCode("ROLLBACK-TEST-001");
     assertNull(found, "Rolled back warehouse should not exist in database");
@@ -156,9 +156,9 @@ public class WarehouseTestcontainersIT {
     warehouse.location = "TILBURG-001";
     warehouse.capacity = 30;
     warehouse.stock = 10;
-    
+
     createWarehouseUseCase.create(warehouse);
-    
+
     // Force rollback
     throw new RuntimeException("Simulated failure");
   }
@@ -174,7 +174,7 @@ public class WarehouseTestcontainersIT {
     createWarehouse("COMPLEX-2", "AMSTERDAM-001", 50);
     createWarehouse("COMPLEX-3", "AMSTERDAM-001", 70);
     createWarehouse("COMPLEX-4", "ZWOLLE-001", 40);
-    
+
     // Query using JPQL
     List<DbWarehouse> results = em.createQuery(
         "SELECT w FROM DbWarehouse w WHERE w.location = :location AND w.capacity BETWEEN :min AND :max",
@@ -183,7 +183,7 @@ public class WarehouseTestcontainersIT {
         .setParameter("min", 40)
         .setParameter("max", 70)
         .getResultList();
-    
+
     // Should find COMPLEX-2 and COMPLEX-3
     assertEquals(2, results.size());
   }

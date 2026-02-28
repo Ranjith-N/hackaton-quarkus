@@ -26,8 +26,10 @@ public class StoreEventObserver {
     });
   }
 
-  public void onStoreUpdated(@ObservesAsync StoreUpdatedEvent event) {
+  public void onStoreUpdated(@Observes(during = TransactionPhase.AFTER_SUCCESS) StoreUpdatedEvent event) {
     LOGGER.info("Store updated event received, syncing with legacy system: " + event.getStore().id);
-    legacyStoreManagerGateway.updateStoreOnLegacySystem(event.getStore());
+    CompletableFuture.runAsync(() -> {
+      legacyStoreManagerGateway.updateStoreOnLegacySystem(event.getStore());
+    });
   }
 }

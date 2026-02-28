@@ -6,6 +6,7 @@ import com.fulfilment.application.monolith.warehouses.domain.ports.CreateWarehou
 import com.fulfilment.application.monolith.warehouses.domain.ports.LocationResolver;
 import com.fulfilment.application.monolith.warehouses.domain.ports.WarehouseStore;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.transaction.Transactional;
 
 @ApplicationScoped
 public class CreateWarehouseUseCase implements CreateWarehouseOperation {
@@ -19,6 +20,7 @@ public class CreateWarehouseUseCase implements CreateWarehouseOperation {
   }
 
   @Override
+  @Transactional
   public void create(Warehouse warehouse) {
     // Validation 1: Business unit code must be unique
     Warehouse existing = warehouseStore.findByBusinessUnitCode(warehouse.businessUnitCode);
@@ -38,15 +40,15 @@ public class CreateWarehouseUseCase implements CreateWarehouseOperation {
     // - Capacity cannot exceed location's max capacity
     if (warehouse.capacity > location.maxCapacity()) {
       throw new IllegalArgumentException(
-          "Warehouse capacity (" + warehouse.capacity + 
-          ") exceeds location max capacity (" + location.maxCapacity() + ")");
+          "Warehouse capacity (" + warehouse.capacity +
+              ") exceeds location max capacity (" + location.maxCapacity() + ")");
     }
 
     // - Stock cannot exceed capacity
     if (warehouse.stock > warehouse.capacity) {
       throw new IllegalArgumentException(
-          "Warehouse stock (" + warehouse.stock + 
-          ") exceeds warehouse capacity (" + warehouse.capacity + ")");
+          "Warehouse stock (" + warehouse.stock +
+              ") exceeds warehouse capacity (" + warehouse.capacity + ")");
     }
 
     // Set creation timestamp

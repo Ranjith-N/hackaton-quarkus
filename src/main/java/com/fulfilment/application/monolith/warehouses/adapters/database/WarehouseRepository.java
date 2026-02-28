@@ -9,9 +9,10 @@ import java.util.List;
 @ApplicationScoped
 public class WarehouseRepository implements WarehouseStore, PanacheRepository<DbWarehouse> {
 
+  // list only the warehouses that are not archived
   @Override
   public List<Warehouse> getAll() {
-    return this.listAll().stream().map(DbWarehouse::toWarehouse).toList();
+    return this.find("archivedAt is null").stream().map(DbWarehouse::toWarehouse).toList();
   }
 
   @Override
