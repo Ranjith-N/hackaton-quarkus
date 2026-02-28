@@ -3,6 +3,8 @@ package com.fulfilment.application.monolith.warehouses.adapters.database;
 import com.fulfilment.application.monolith.warehouses.domain.models.Warehouse;
 import com.fulfilment.application.monolith.warehouses.domain.ports.WarehouseStore;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
+import io.quarkus.panache.common.Page;
+import io.quarkus.panache.common.Sort;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.util.List;
 
@@ -61,5 +63,48 @@ public class WarehouseRepository implements WarehouseStore, PanacheRepository<Db
   public Warehouse findByBusinessUnitCode(String buCode) {
     DbWarehouse dbWarehouse = find("businessUnitCode", buCode).firstResult();
     return dbWarehouse != null ? dbWarehouse.toWarehouse() : null;
+  }
+
+  @Override
+  public List<Warehouse> search(
+      String location,
+      Integer minCapacity,
+      Integer maxCapacity,
+      String sortBy,
+      String sortOrder,
+      Integer page,
+      Integer pageSize) {
+
+    StringBuilder query = new StringBuilder("archivedAt is null");
+    java.util.Map<String, Object> params = new java.util.HashMap<>();
+
+    if (location != null && !location.isBlank()) {
+      query.append(" and location = :location");
+      params.put("location", location);
+    }
+
+    if (minCapacity != null) {
+      query.append(" and capacity >= :minCapacity");
+      params.put("minCapacity", minCapacity);
+    }
+
+    if (maxCapacity != null) {
+      query.append(" and capacity <= :maxCapacity");
+      params.put("maxCapacity", maxCapacity);
+    }
+
+    Sort sort = Sort.by(sortBy != null ? sortBy : "createdAt");
+    if ("desc".equalsIgnoreCase(sortOrder)) {
+      sort = sort.direction(Sort.Direction.Descending);
+    } else {
+      sort = sort.direction(Sort.Direction.Ascending);
+    }
+
+    return this.find(query.toString(), sort, params)
+        .page(Page.of(page != null ? page : 0, pageSize != null ? pageSize : 10))
+        .list()
+        .stream()
+        .map(DbWarehouse::toWarehouse)
+        .toList();
   }
 }

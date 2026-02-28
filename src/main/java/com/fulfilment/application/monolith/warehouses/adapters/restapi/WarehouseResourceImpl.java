@@ -11,15 +11,21 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.WebApplicationException;
+
+import java.math.BigInteger;
 import java.util.List;
 
 @RequestScoped
 public class WarehouseResourceImpl implements WarehouseResource {
 
-  @Inject private WarehouseRepository warehouseRepository;
-  @Inject private CreateWarehouseOperation createWarehouseOperation;
-  @Inject private ArchiveWarehouseOperation archiveWarehouseOperation;
-  @Inject private ReplaceWarehouseOperation replaceWarehouseOperation;
+  @Inject
+  private WarehouseRepository warehouseRepository;
+  @Inject
+  private CreateWarehouseOperation createWarehouseOperation;
+  @Inject
+  private ArchiveWarehouseOperation archiveWarehouseOperation;
+  @Inject
+  private ReplaceWarehouseOperation replaceWarehouseOperation;
 
   @Override
   public List<Warehouse> listAllWarehousesUnits() {
@@ -39,7 +45,7 @@ public class WarehouseResourceImpl implements WarehouseResource {
     try {
       // Create warehouse through use case (includes validations)
       createWarehouseOperation.create(domainWarehouse);
-      
+
       // Return the created warehouse
       return toWarehouseResponse(domainWarehouse);
     } catch (IllegalArgumentException e) {
@@ -51,11 +57,11 @@ public class WarehouseResourceImpl implements WarehouseResource {
   public Warehouse getAWarehouseUnitByID(String id) {
     // Find warehouse by business unit code
     var domainWarehouse = warehouseRepository.findByBusinessUnitCode(id);
-    
+
     if (domainWarehouse == null) {
       throw new WebApplicationException("Warehouse with business unit code '" + id + "' not found", 404);
     }
-    
+
     return toWarehouseResponse(domainWarehouse);
   }
 
@@ -100,6 +106,29 @@ public class WarehouseResourceImpl implements WarehouseResource {
     }
   }
 
+  @Override
+  public List<Warehouse> searchAndFilterWarehouses(
+      String location,
+      java.math.BigInteger minCapacity,
+      java.math.BigInteger maxCapacity,
+      String sortBy,
+      String sortOrder,
+      java.math.BigInteger page,
+      java.math.BigInteger pageSize) {
+    return warehouseRepository
+        .search(
+            location,
+            minCapacity != null ? minCapacity.intValue() : null,
+            maxCapacity != null ? maxCapacity.intValue() : null,
+            sortBy,
+            sortOrder,
+            page != null ? page.intValue() : 0,
+            pageSize != null ? pageSize.intValue() : 10)
+        .stream()
+        .map(this::toWarehouseResponse)
+        .toList();
+  }
+
   private Warehouse toWarehouseResponse(
       com.fulfilment.application.monolith.warehouses.domain.models.Warehouse warehouse) {
     var response = new Warehouse();
@@ -110,4 +139,5 @@ public class WarehouseResourceImpl implements WarehouseResource {
 
     return response;
   }
+
 }

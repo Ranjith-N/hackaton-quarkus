@@ -30,7 +30,8 @@ public class ReplaceWarehouseUseCase implements ReplaceWarehouseOperation {
     // Validation 2: Warehouse must not be archived
     if (existing.archivedAt != null) {
       throw new IllegalArgumentException(
-          "Warehouse with business unit code '" + newWarehouse.businessUnitCode + "' is archived and cannot be replaced");
+          "Warehouse with business unit code '" + newWarehouse.businessUnitCode
+              + "' is archived and cannot be replaced");
     }
 
     // Validation 3: Location must be valid
@@ -45,14 +46,14 @@ public class ReplaceWarehouseUseCase implements ReplaceWarehouseOperation {
     if (newWarehouse.capacity > location.maxCapacity()) {
       throw new IllegalArgumentException(
           "Warehouse capacity (" + newWarehouse.capacity +
-          ") exceeds location max capacity (" + location.maxCapacity() + ")");
+              ") exceeds location max capacity (" + location.maxCapacity() + ")");
     }
 
     // - Stock cannot exceed capacity
     if (newWarehouse.stock > newWarehouse.capacity) {
       throw new IllegalArgumentException(
           "Warehouse stock (" + newWarehouse.stock +
-          ") exceeds warehouse capacity (" + newWarehouse.capacity + ")");
+              ") exceeds warehouse capacity (" + newWarehouse.capacity + ")");
     }
 
     // Update warehouse fields (preserve createdAt, businessUnitCode, archivedAt)
