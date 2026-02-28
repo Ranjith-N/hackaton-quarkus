@@ -23,23 +23,29 @@ public class WarehouseRepository implements WarehouseStore, PanacheRepository<Db
     dbWarehouse.stock = warehouse.stock;
     dbWarehouse.createdAt = warehouse.createdAt;
     dbWarehouse.archivedAt = warehouse.archivedAt;
-    
+    dbWarehouse.version = warehouse.version;
+
     this.persist(dbWarehouse);
   }
 
   @Override
   public void update(Warehouse warehouse) {
-    getEntityManager().createQuery(
-      "UPDATE DbWarehouse w SET w.location = :loc, w.capacity = :cap, " +
-      "w.stock = :stock, w.archivedAt = :archived WHERE w.businessUnitCode = :code")
-      .setParameter("loc", warehouse.location)
-      .setParameter("cap", warehouse.capacity)
-      .setParameter("stock", warehouse.stock)
-      .setParameter("archived", warehouse.archivedAt)
-      .setParameter("code", warehouse.businessUnitCode)
-      .executeUpdate();
+    DbWarehouse dbWarehouse = find("businessUnitCode", warehouse.businessUnitCode).firstResult();
+    if (dbWarehouse == null) {
+      throw new IllegalArgumentException(
+          "Warehouse with business unit code '" + warehouse.businessUnitCode + "' does not exist");
+    }
 
-    // Clear persistence context to see updates in subsequent queries
+    // Set the version from the domain model to enable optimistic locking check
+    dbWarehouse.version = warehouse.version;
+
+    dbWarehouse.location = warehouse.location;
+    dbWarehouse.capacity = warehouse.capacity;
+    dbWarehouse.stock = warehouse.stock;
+    dbWarehouse.archivedAt = warehouse.archivedAt;
+
+    // Hibernate will automatically perform version check and increment on
+    // flush/commit
     getEntityManager().flush();
     getEntityManager().clear();
   }

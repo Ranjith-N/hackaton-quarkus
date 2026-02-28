@@ -1,8 +1,13 @@
 package com.fulfilment.application.monolith.stores;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.event.ObservesAsync;
+import jakarta.enterprise.event.TransactionPhase;
 import jakarta.inject.Inject;
+
+import java.util.concurrent.CompletableFuture;
+
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
@@ -10,12 +15,15 @@ public class StoreEventObserver {
 
   private static final Logger LOGGER = Logger.getLogger(StoreEventObserver.class.getName());
 
-  @Inject 
+  @Inject
   LegacyStoreManagerGateway legacyStoreManagerGateway;
 
-  public void onStoreCreated(@ObservesAsync StoreCreatedEvent event) {
-    LOGGER.info("Store created event received, syncing with legacy system: " + event.getStore().id);
-    legacyStoreManagerGateway.createStoreOnLegacySystem(event.getStore());
+  public void onStoreCreated(@Observes(during = TransactionPhase.AFTER_SUCCESS) StoreCreatedEvent event) {
+    // This ONLY runs if the DB transaction committed successfully.
+    // To keep the API response fast, you can hand this off to an Executor.
+    CompletableFuture.runAsync(() -> {
+      legacyStoreManagerGateway.createStoreOnLegacySystem(event.getStore());
+    });
   }
 
   public void onStoreUpdated(@ObservesAsync StoreUpdatedEvent event) {

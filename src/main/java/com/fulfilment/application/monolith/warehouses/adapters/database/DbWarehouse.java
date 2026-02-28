@@ -15,8 +15,10 @@ import java.time.LocalDateTime;
 @Cacheable
 public class DbWarehouse {
 
-  @Id @GeneratedValue public Long id;
-  
+  @Id
+  @GeneratedValue
+  public Long id;
+
   @Version
   public Long version;
 
@@ -33,7 +35,8 @@ public class DbWarehouse {
 
   public LocalDateTime archivedAt;
 
-  public DbWarehouse() {}
+  public DbWarehouse() {
+  }
 
   public Warehouse toWarehouse() {
     var warehouse = new Warehouse();
@@ -43,6 +46,7 @@ public class DbWarehouse {
     warehouse.stock = this.stock;
     warehouse.createdAt = this.createdAt;
     warehouse.archivedAt = this.archivedAt;
+    warehouse.version = this.version;
     return warehouse;
   }
 }
